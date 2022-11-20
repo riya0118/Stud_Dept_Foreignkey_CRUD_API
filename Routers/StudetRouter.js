@@ -72,6 +72,7 @@ router.get("/:id", (req, res) => {
       _id: data._id,
       rollno: data.rollno,
       name: data.name,
+      deptId: data.dept._id,
       dept: data.dept.deptName,
       age: data.age,
       sem: data.sem,
@@ -84,8 +85,8 @@ router.get("/:id", (req, res) => {
 
 router.put("/:id", (req, res) => {
   Student.findOneAndUpdate({ "_id": req.params.id }, req.body, { new: true }, (err, student) => {
-    if (!student) res.status(404).send("No data found!!!");
-    res.send(student);
+    if (err) res.status(500).send(err);
+    res.status(200).send(student);
   })
 })
 
