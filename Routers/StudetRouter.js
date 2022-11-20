@@ -2,13 +2,36 @@ const router = require("express").Router();
 const Department = require("../Models/Department");
 const Student = require("../Models/Student");
 
-router.get("/getdepts", (req, res) => {
+const jwt = require("jsonwebtoken");
+const localstorage = require("localStorage");
+const checktoken = require("../jwt/checktoken");
+
+router.post("/login", (req, res) => {
+  Student.find({ username: req.body.username }, (err, data) => {
+    const student = data[0];
+    if (student) {
+      if (req.body.password == student.password) {
+        const token = jwt.sign({ studentID: student._id }, process.env.JWT_SECRET);
+        localstorage.setItem('token', token);
+        res.send(token);
+      }
+      else {
+        res.status(401).send("Unauthorized!!!");
+      }
+    }
+    else {
+      res.status(401).send("Invalid credentials!!!");
+    }
+  })
+})
+
+router.get("/getdepts", checktoken, (req, res) => {
   Department.find((err, depts) => {
     res.send(depts);
   })
 })
 
-router.get("/", (req, res) => {
+router.get("/", checktoken, (req, res) => {
   var students = [];
   Student.find().populate("dept").exec((err, data) => {
     data.forEach((student) => {
@@ -61,7 +84,7 @@ router.get("/:id", (req, res) => {
 
 router.put("/:id", (req, res) => {
   Student.findOneAndUpdate({ "_id": req.params.id }, req.body, { new: true }, (err, student) => {
-    if(!student) res.status(404).send("No data found!!!");
+    if (!student) res.status(404).send("No data found!!!");
     res.send(student);
   })
 })
